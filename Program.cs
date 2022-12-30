@@ -82,12 +82,22 @@ public class SocketListener
             data += Encoding.ASCII.GetString(bytes,
                                         0, numByte);
             Console.WriteLine(data);
+
+            if (data.IndexOf("\n") > -1)
+            {
+                clientSocket.Send(Encoding.ASCII.GetBytes("\nPong : " + data + "\n"));
+                data = "";
+            }
+
             if (data.IndexOf("<EOF>") > -1)
+            {
+                clientSocket.Send(Encoding.ASCII.GetBytes("\nPong : " + data + "\n"));
                 break;
+            }
         }
 
         Console.WriteLine("Text received -> {0} ", data);
-        byte[] message = Encoding.ASCII.GetBytes("Test Server");
+        byte[] message = Encoding.ASCII.GetBytes("\nTest Server");
 
         // Send a message to Client
         // using Send() method
