@@ -5,13 +5,29 @@ using System.Net.Sockets;
 // See https://aka.ms/new-console-template for more information
 Console.WriteLine("Hello, World!");
 Console.WriteLine("Botak");
-StartServer();
+Console.WriteLine("What Server do you want to start (1=TCP,2=UDP, 3=EXIT - not protocol): ");
+string input;
+
+do
+{
+    input = Console.ReadLine() ?? "";
+    switch (input)
+    {
+        case "1":
+            StartServerTCP();
+            break;
+        default:
+            StartServerUDP();
+            break;
+    }
+} while (input != "3");
+
 
 /// 
 /// @see https://www.geeksforgeeks.org/socket-programming-in-c-sharp/
 /// On Windows/Nix we can test using telnet
 ///
-static void StartServer() 
+static void StartServerTCP() 
 {
     // Establish the local endpoint
     // for the socket. Dns.GetHostName
@@ -58,6 +74,58 @@ static void StartServer()
         Console.WriteLine(e.ToString());
     }
 }
+
+/// Some inspiration comes from this, but.. this still not threaded..
+/// @see http://www.java2s.com/Code/CSharp/Network/UdpServerSample.htm
+/// 
+static void StartServerUDP()
+{
+     // Establish the local endpoint
+    // for the socket. Dns.GetHostName
+    // returns the name of the host
+    // running the application.
+    IPHostEntry ipHost = Dns.GetHostEntry(Dns.GetHostName());
+    IPAddress ipAddr = IPAddress.Any;
+    IPEndPoint localEndPoint = new IPEndPoint(ipAddr, 11111);
+    
+    Console.WriteLine(ipHost.HostName + " " + ipAddr.ToString());
+    // Creation TCP/IP Socket using
+    // Socket Class Constructor
+    Socket listener = new Socket(ipAddr.AddressFamily,
+                 SocketType.Dgram, ProtocolType.Udp);
+ 
+    try {
+         
+        // Using Bind() method we associate a
+        // network address to the Server Socket
+        // All client that will connect to this
+        // Server Socket must know this network
+        // Address
+        listener.Bind(localEndPoint);
+
+        while (true) {
+            Console.WriteLine("Waiting connection ... ");
+            
+            // Create simple receiver
+            byte[] data =  new byte[1024];
+            
+            // Prepare the sender variable
+            EndPoint sender = new IPEndPoint(IPAddress.Any, 0);
+
+            // Directly Receive as UDP doesn't do SEND ACK 
+            int lengthBytes = listener.ReceiveFrom(data, ref sender);
+            string hasil = Encoding.UTF8.GetString(data,0, lengthBytes);
+            Console.WriteLine(hasil);
+
+            listener.SendTo(Encoding.ASCII.GetBytes("\nPong : " + hasil + "\n"), sender);
+        }
+    }
+    catch (Exception e) {
+        Console.WriteLine(e.ToString());
+    }
+
+}
+
 public class SocketListener
 {
     private Socket clientSocket;
