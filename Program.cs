@@ -14,9 +14,11 @@ do
     switch (input)
     {
         case "1":
+            Console.WriteLine("Start TCP Server");
             StartServerTCP();
             break;
         default:
+            Console.WriteLine("Start UDP Server");
             StartServerUDP();
             break;
     }
