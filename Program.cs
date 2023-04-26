@@ -117,7 +117,15 @@ static void StartServerUDP()
             string hasil = Encoding.UTF8.GetString(data,0, lengthBytes);
             Console.WriteLine(hasil);
 
-            listener.SendTo(Encoding.ASCII.GetBytes("\nPong : " + hasil + "\n"), sender);
+            Console.WriteLine(((IPEndPoint) sender).Address);
+            string sourceIP = ((IPEndPoint)sender).Address.ToString();
+            IPEndPoint responseTarget = ((IPEndPoint)sender);
+            responseTarget.Port = 11111;
+
+            // Send using alternative port, the 11111, for broadcast
+            listener.SendTo(Encoding.ASCII.GetBytes("\nHello " + sourceIP + "\nPong : " + hasil + "\n"), responseTarget);
+            // If it's directly to us, the ncat can print teh response
+            listener.SendTo(Encoding.ASCII.GetBytes("\nHello "+sourceIP+"\nPong : " + hasil + "\n"), sender);
         }
     }
     catch (Exception e) {
@@ -144,21 +152,23 @@ public class SocketListener
 
         while (true)
         {
+            EndPoint? sender = clientSocket.RemoteEndPoint;
 
             int numByte = clientSocket.Receive(bytes);
-
-            data += Encoding.ASCII.GetString(bytes,
-                                        0, numByte);
-            Console.WriteLine(data);
+            
+            data += Encoding.ASCII.GetString(bytes, 0, numByte);
 
             if (data.IndexOf("\n") > -1)
             {
+                Console.WriteLine("From " + (((IPEndPoint) sender).Address.ToString() ?? "-") + " : " + data);
                 clientSocket.Send(Encoding.ASCII.GetBytes("\nPong : " + data + "\n"));
                 data = "";
             }
 
             if (data.IndexOf("<EOF>") > -1)
             {
+                Console.WriteLine("From " + (((IPEndPoint) sender).Address.ToString() ?? "-")
+                    + " : " + data);
                 clientSocket.Send(Encoding.ASCII.GetBytes("\nPong : " + data + "\n"));
                 break;
             }
