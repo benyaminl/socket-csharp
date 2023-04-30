@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using System.Text;
 using System.Net.Sockets;
-using System.Net.NetworkInformation;
 
 // See https://aka.ms/new-console-template for more information
 Console.WriteLine("Hello, World!");
@@ -39,7 +38,7 @@ static void StartServerTCP()
     IPHostEntry ipHost = Dns.GetHostEntry(Dns.GetHostName());
     IPAddress ipAddr = IPAddress.Any;
     IPEndPoint localEndPoint = new IPEndPoint(ipAddr, 11111);
-    var ips = GetIPAddress();
+    var ips = IPHelper.GetInterfaceIPAddress();
     Console.WriteLine(ipHost.HostName + " " + ipAddr.ToString());
     // Creation TCP/IP Socket using
     // Socket Class Constructor
@@ -90,7 +89,7 @@ static void StartServerUDP()
     IPHostEntry ipHost = Dns.GetHostEntry(Dns.GetHostName());
     IPAddress ipAddr = IPAddress.Any;
     IPEndPoint localEndPoint = new IPEndPoint(ipAddr, 11111);
-    var ips = GetIPAddress();
+    var ips = IPHelper.GetInterfaceIPAddress();
     
     Console.WriteLine(ipHost.HostName + " " + ipAddr.ToString());
     // Creation TCP/IP Socket using
@@ -136,82 +135,6 @@ static void StartServerUDP()
         Console.WriteLine(e.ToString());
     }
 
-}
-
-/// This code derived from https://stackoverflow.com/a/4553625/4906348 
-/// and https://stackoverflow.com/a/39338188/4906348 
-/// You this need cleanup TODO: Change to class
-static List<IPAddressDetail> GetIPAddress()
-{
-    var nics = NetworkInterface.GetAllNetworkInterfaces();
-    // Using struct for making data 
-    var IPAddresses = new List<IPAddressDetail>();
-
-    foreach (var nic in nics) {
-        var ipProps = nic.GetIPProperties();
-
-        // We're only interested in IPv4 addresses for this example.
-        var ipv4Addrs = ipProps.UnicastAddresses
-            .Where(addr => addr.Address.AddressFamily == AddressFamily.InterNetwork);
-
-        foreach (var addr in ipv4Addrs) {
-            var network = CalculateNetwork(addr);
-            var broadcast = GetBroadcastAddress(addr);
-
-            if (network != null)
-            {
-                Console.WriteLine("Addr: {0}   Mask: {1}  Network: {2} Broadcast : {3}", addr.Address, addr.IPv4Mask, network, broadcast);
-                IPAddresses.Add(new IPAddressDetail(addr.Address.ToString(), addr.IPv4Mask.ToString(), broadcast.ToString()));
-            }
-        }
-    }
-
-    return IPAddresses;
-}
-
-static IPAddress? CalculateNetwork(UnicastIPAddressInformation addr)
-{
-    // The mask will be null in some scenarios, like a dhcp address 169.254.x.x
-    if (addr.IPv4Mask == null)
-        return null;
-
-    var ip = addr.Address.GetAddressBytes();
-    var mask = addr.IPv4Mask.GetAddressBytes();
-    var result = new Byte[4];
-    for (int i = 0; i < 4; ++i) {
-        result[i] = (Byte)(ip[i] & mask[i]);
-    }
-
-    return new IPAddress(result);
-}
-
-/// Only Unicast Address can have mask
-/// @see https://stackoverflow.com/a/39338188/4906348
-///
-static IPAddress GetBroadcastAddress(UnicastIPAddressInformation unicastAddress)
-{
-    var address = unicastAddress.Address;
-    var mask = unicastAddress.IPv4Mask;
-
-    uint ipAddress = BitConverter.ToUInt32(address.GetAddressBytes(), 0);
-    uint ipMaskV4 = BitConverter.ToUInt32(mask.GetAddressBytes(), 0);
-    uint broadCastIpAddress = ipAddress | ~ipMaskV4;
-
-    return new IPAddress(BitConverter.GetBytes(broadCastIpAddress));
-}
-
-struct IPAddressDetail
-{
-    public IPAddressDetail(string addr, string broadcast, string mask)
-    {
-        address = addr;
-        this.broadcast = broadcast;
-        this.mask = mask;
-    }
-
-    string address;
-    string broadcast;
-    string mask;
 }
 
 public class SocketListener
