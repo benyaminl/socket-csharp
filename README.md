@@ -36,3 +36,7 @@ dotnet publish --os win --self-contained true -c Release
 ```
 dotnet publish --os osx --self-contained true -c Release
 ```
+
+## Why it's not responding to any broadcast?
+
+By default, this software listen on port 11111, if the firewall block this port, then you won't even able got the broadcast from any package that send to broadcast, so you need to allow udp/11111 to be opened by firewall. 
