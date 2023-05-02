@@ -152,7 +152,8 @@ public class ChatService
             // is same chat window
             string newKey = System.Guid.NewGuid().ToString();
             this.chatPairKey.Add(fromIP + "-" + toIP, newKey);
-            this.chatPairKey.Add(toIP + "-" + fromIP, newKey);
+            if ((fromIP + "-" + toIP) != (toIP + "-" + fromIP)) // If send to ourself, it's same
+                this.chatPairKey.Add(toIP + "-" + fromIP, newKey);
             // init new chat rows
             this.chatData.Add(newKey, new List<ChatRow>());
         }
