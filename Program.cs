@@ -43,13 +43,13 @@ do
         case "-2":
             Console.WriteLine("List Chats : ");
             var history = svc?.GetChatHistory();
-            
+
             foreach (var h in history)
             {
                 Console.WriteLine("Chat : " + h.Key);
                 h.Value.ForEach(d =>
                 {
-                    Console.WriteLine(d.from + "-" + d.to + ": " + d.message);
+                    Console.WriteLine(d.from.ipAddress + "-" + d.to.ipAddress + ": " + d.message);
                 });
             }
 
