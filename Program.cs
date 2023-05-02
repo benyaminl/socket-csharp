@@ -5,11 +5,11 @@ using System.Net.Sockets;
 // See https://aka.ms/new-console-template for more information
 Console.WriteLine("Hello, World!");
 Console.WriteLine("Botak");
-Console.WriteLine("What Server do you want to start (1=TCP,2=UDP, 3=EXIT - not protocol): ");
-string input;
+string input; ChatService? svc = null;
 
 do
 {
+    Console.WriteLine("What Server do you want to start (-2=History,-1=,0=Chat,1=TCP,2=UDP, 3=EXIT - not protocol): ");
     input = Console.ReadLine() ?? "";
     switch (input)
     {
@@ -17,9 +17,42 @@ do
             Console.WriteLine("Start TCP Server");
             StartServerTCP();
             break;
-        default:
+        case "2":
             Console.WriteLine("Start UDP Server");
-            StartServerUDP();
+            if (svc == null)
+                StartServerUDPChat(ref svc);
+            // StartServerUDP();
+            break;
+        case "0":
+            Console.WriteLine("List Of Peers");
+            svc?.GetListOfPeers().ForEach(d =>
+            {
+                Console.WriteLine(d.ipAddress+" - "+d.username);
+            });
+
+            Console.WriteLine("Who : ");
+            string who = Console.ReadLine() ?? "";
+            Console.WriteLine("Msg : ");
+            string msg = Console.ReadLine() ?? "";
+            svc?.SendChat(who, msg);
+            break;
+        case "-1":
+            Console.WriteLine("List Interfaces : ");
+            IPHelper.GetInterfaceIPAddress(debug: true);
+            break;
+        case "-2":
+            Console.WriteLine("List Chats : ");
+            var history = svc?.GetChatHistory();
+            
+            foreach (var h in history)
+            {
+                Console.WriteLine("Chat : " + h.Key);
+                h.Value.ForEach(d =>
+                {
+                    Console.WriteLine(d.from + "-" + d.to + ": " + d.message);
+                });
+            }
+
             break;
     }
 } while (input != "3");
@@ -75,6 +108,23 @@ static void StartServerTCP()
     catch (Exception e) {
         Console.WriteLine(e.ToString());
     }
+}
+
+static void StartServerUDPChat(ref ChatService? service)
+{
+    IPHostEntry ipHost = Dns.GetHostEntry(Dns.GetHostName());
+    IPAddress ipAddr = IPAddress.Any;
+    IPEndPoint localEndPoint = new IPEndPoint(ipAddr, 11111);
+    
+    Console.WriteLine(ipHost.HostName + " " + ipAddr.ToString());
+    // Creation TCP/IP Socket using
+    // Socket Class Constructor
+    Socket listener = new Socket(ipAddr.AddressFamily,
+                 SocketType.Dgram, ProtocolType.Udp);
+    
+    listener.Bind(localEndPoint);
+
+    service = new ChatService(listener, "ben");
 }
 
 /// Some inspiration comes from this, but.. this still not threaded..

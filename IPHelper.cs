@@ -6,7 +6,7 @@ public class IPHelper
 {
     /// This code derived from https://stackoverflow.com/a/4553625/4906348 
     /// and https://stackoverflow.com/a/39338188/4906348 
-    public static List<IPAddressDetail> GetInterfaceIPAddress()
+    public static List<IPAddressDetail> GetInterfaceIPAddress(bool debug = false)
     {
         var nics = NetworkInterface.GetAllNetworkInterfaces();
         // Using struct for making data 
@@ -17,7 +17,8 @@ public class IPHelper
 
             // We're only interested in IPv4 addresses for this example.
             var ipv4Addrs = ipProps.UnicastAddresses
-                .Where(addr => addr.Address.AddressFamily == AddressFamily.InterNetwork);
+                .Where(addr => addr.Address.AddressFamily == AddressFamily.InterNetwork)
+                .Where(addr => addr.Address.ToString() != "127.0.0.1");
 
             foreach (var addr in ipv4Addrs) {
                 var network = CalculateNetwork(addr);
@@ -25,8 +26,9 @@ public class IPHelper
 
                 if (network != null)
                 {
-                    Console.WriteLine("Addr: {0}   Mask: {1}  Network: {2} Broadcast : {3}", addr.Address, addr.IPv4Mask, network, broadcast);
-                    IPAddresses.Add(new IPAddressDetail(addr.Address.ToString(), broadcast.ToString(), addr.IPv4Mask.ToString()));
+                    if (debug)
+                        Console.WriteLine("Addr: {0}   Mask: {1}  Network: {2} Broadcast : {3}", addr.Address, addr.IPv4Mask, network, broadcast);
+                    IPAddresses.Add(new IPAddressDetail(addr: addr.Address.ToString(), broadcast: broadcast.ToString(), mask: addr.IPv4Mask.ToString(), unicast: addr));
                 }
             }
         }
@@ -85,14 +87,16 @@ public class IPHelper
 
 public struct IPAddressDetail
 {
-    public IPAddressDetail(string addr, string broadcast, string mask)
+    public IPAddressDetail(string addr, string broadcast, string mask, UnicastIPAddressInformation unicast)
     {
         address = addr;
         this.broadcast = broadcast;
         this.mask = mask;
+        this.unicast = unicast;
     }
 
     public string address;
     public string broadcast;
     public string mask;
+    public UnicastIPAddressInformation unicast;
 }
