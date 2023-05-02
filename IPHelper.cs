@@ -26,7 +26,7 @@ public class IPHelper
                 if (network != null)
                 {
                     Console.WriteLine("Addr: {0}   Mask: {1}  Network: {2} Broadcast : {3}", addr.Address, addr.IPv4Mask, network, broadcast);
-                    IPAddresses.Add(new IPAddressDetail(addr.Address.ToString(), addr.IPv4Mask.ToString(), broadcast.ToString()));
+                    IPAddresses.Add(new IPAddressDetail(addr.Address.ToString(), broadcast.ToString(), addr.IPv4Mask.ToString()));
                 }
             }
         }
@@ -63,6 +63,23 @@ public class IPHelper
         uint broadCastIpAddress = ipAddress | ~ipMaskV4;
 
         return new IPAddress(BitConverter.GetBytes(broadCastIpAddress));
+    }
+
+    public static bool IsOneBroadcast(UnicastIPAddressInformation ownIP, IPAddress target)
+    {
+        bool status = false;
+        var ownBroadcast = GetBroadcastAddress(ownIP);
+        
+        var mask = ownIP.IPv4Mask;
+
+        uint ipAddress = BitConverter.ToUInt32(target.GetAddressBytes(), 0);
+        uint ipMaskV4 = BitConverter.ToUInt32(mask.GetAddressBytes(), 0);
+        uint broadCastIpAddress = ipAddress | ~ipMaskV4;
+        var targetBroadcast = new IPAddress(BitConverter.GetBytes(broadCastIpAddress));
+
+        if (targetBroadcast.Equals(ownBroadcast)) status = true;
+
+        return status;
     }
 }
 
