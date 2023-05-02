@@ -18,7 +18,8 @@ public class IPHelper
             // We're only interested in IPv4 addresses for this example.
             var ipv4Addrs = ipProps.UnicastAddresses
                 .Where(addr => addr.Address.AddressFamily == AddressFamily.InterNetwork)
-                .Where(addr => addr.Address.ToString() != "127.0.0.1");
+                .Where(addr => addr.Address.ToString() != "127.0.0.1") // Exclude localhost
+                .Where(addr => addr.Address.ToString().Substring(0,7) != "169.254" ); // Exclude DHCP IP, Windows based
 
             foreach (var addr in ipv4Addrs) {
                 var network = CalculateNetwork(addr);
