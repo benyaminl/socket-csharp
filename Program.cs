@@ -123,8 +123,9 @@ static void StartServerUDPChat(ref ChatService? service)
                  SocketType.Dgram, ProtocolType.Udp);
     
     listener.Bind(localEndPoint);
-
-    service = new ChatService(listener, "ben");
+    Console.Write("Type your username : ");
+    string username = Console.ReadLine() ?? "undefined";
+    service = new ChatService(listener, username);
 }
 
 /// Some inspiration comes from this, but.. this still not threaded..
