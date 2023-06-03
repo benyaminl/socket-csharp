@@ -10,6 +10,8 @@ internal class Program
         Console.WriteLine("Hello, World!");
         Console.WriteLine("Botak");
         Console.CancelKeyPress += HandleCancel;
+        AppDomain.CurrentDomain.ProcessExit += HandleCancel;
+        
         string input; ChatService? svc = null;
 
         do
@@ -246,10 +248,18 @@ internal class Program
         /// Cancel handle on 
         /// @see https://learn.microsoft.com/en-us/dotnet/api/system.console.cancelkeypress?redirectedfrom=MSDN&view=net-7.0#examples
         ///
-        static void HandleCancel(object sender, ConsoleCancelEventArgs args)
+        static void HandleCancel(object sender, EventArgs args)
         {
             Console.WriteLine("Shutting Down...");
-            args.Cancel = false;
+
+            // Specific to Exit? Probably 
+            // @see https://stackoverflow.com/a/1119869/4906348
+            if (args.GetType() == typeof(ConsoleCancelEventArgs))
+            {
+                ConsoleCancelEventArgs con = (ConsoleCancelEventArgs)args;
+                con.Cancel = false;
+            }
+            
             // Disconnect doesn't remove the file socket sadly
             unixListener?.Disconnect(false);
             // We need to delete manually, get the path
