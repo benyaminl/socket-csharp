@@ -12,6 +12,7 @@ public class SocketUnixListener : SocketIPListener
         // Data buffer
         byte[] bytes = new Byte[1024];
         string? data = null;
+        string history = "";
 
         while (true)
         {
@@ -20,12 +21,16 @@ public class SocketUnixListener : SocketIPListener
             int numByte = clientSocket.Receive(bytes);
             
             data += Encoding.ASCII.GetString(bytes, 0, numByte);
+            history += data;
 
             if (data.IndexOf("\n") > -1)
             {
                 // Console.WriteLine("From " + (((IPEndPoint) sender).Address.ToString() ?? "-") + " : " + data);
                 clientSocket.Send(Encoding.ASCII.GetBytes("\nPong : " + data + "\n"));
-                data = "";
+                if (data.IndexOf("<EOF>") > -1)
+                    data = "<EOF>";
+                else 
+                    data = "";
             }
 
             if (data.IndexOf("<EOF>") > -1)
@@ -37,7 +42,7 @@ public class SocketUnixListener : SocketIPListener
             }
         }
 
-        Console.WriteLine("Text received -> {0} ", data);
+        Console.WriteLine("Text received -> {0} ", history);
         byte[] message = Encoding.ASCII.GetBytes("\nTest Server");
 
         // Send a message to Client
