@@ -9,7 +9,7 @@ string input; ChatService? svc = null;
 
 do
 {
-    Console.WriteLine("What Server do you want to start (-2=History,-1=,0=Chat,1=TCP,2=UDP, 3=EXIT - not protocol): ");
+    Console.WriteLine("What Server do you want to start (-2=History,-1=,0=Chat,1=TCP,2=UDP,3=SocketFile 4=EXIT - not protocol): ");
     input = Console.ReadLine() ?? "";
     switch (input)
     {
@@ -22,6 +22,10 @@ do
             if (svc == null)
                 StartServerUDPChat(ref svc);
             // StartServerUDP();
+            break;
+        case "3":
+            Console.WriteLine("Start Unix Socket File Server");
+            StartUnixSocketFile();
             break;
         case "0":
             Console.WriteLine("List Of Peers");
@@ -55,7 +59,7 @@ do
 
             break;
     }
-} while (input != "3");
+} while (input != "4");
 
 
 /// 
@@ -100,7 +104,7 @@ static void StartServerTCP()
             // will accept connection of client
             Socket clientSocket = listener.Accept();
 
-            SocketListener obj = new SocketListener(clientSocket);
+            SocketIPListener obj = new SocketIPListener(clientSocket);
             Thread tr = new Thread(new ThreadStart(obj.newClient));
             tr.Start();
         }
@@ -188,11 +192,48 @@ static void StartServerUDP()
 
 }
 
-public class SocketListener
+/// This is my Own (ben) implementation from StackOverflow
+/// @see https://stackoverflow.com/questions/40195290/how-to-connect-to-a-unix-domain-socket-in-net-core-in-c-sharp
+/// @see https://learn.microsoft.com/en-us/dotnet/api/system.net.sockets.unixdomainsocketendpoint?view=netcore-2.1#applies-to
+static void StartUnixSocketFile()
 {
-    private Socket clientSocket;
+    Console.Write("Fill the location (default /tmp/unix-dotnet.sock): ");
+    string input = Console.ReadLine() ?? "";
+    string location = (input.Length <= 0 ) ? "/tmp/unix-dotnet.sock" : input;
+    Socket socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.IP);
+    EndPoint fileEndPoint = new UnixDomainSocketEndPoint(location);
 
-    public SocketListener(Socket clientSocket)
+    try {
+        socket.Bind(fileEndPoint);
+
+        // Using Listen() method we create
+        // the Client list that will want
+        // to connect to Server
+        socket.Listen(20);
+ 
+        while (true) {
+            Console.WriteLine("Waiting connection ... ");
+            // Suspend while waiting for
+            // incoming connection Using
+            // Accept() method the server
+            // will accept connection of client
+            Socket clientSocket = socket.Accept();
+
+            SocketUnixListener obj = new SocketUnixListener(clientSocket);
+            Thread tr = new Thread(new ThreadStart(obj.newClient));
+            tr.Start();
+        }
+    }
+    catch (Exception e) {
+        Console.WriteLine(e.ToString());
+    }
+}
+
+public class SocketIPListener
+{
+    protected Socket clientSocket;
+
+    public SocketIPListener(Socket clientSocket)
     {
         this.clientSocket = clientSocket;
     }
